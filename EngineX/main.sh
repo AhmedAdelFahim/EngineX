@@ -16,7 +16,13 @@ function read_query {
         elif [[ $input =~ INSERT\ +INTO\ +[A-Za-z_]+\ +ROW\ +([A-Za-z_]+=(\"[A-Za-z_0-9 ]+\"|([A-Za-z_0-9 ])+)\ +)+\;$ ]]
         then
             insert_into $input
-#            echo $?
+            if [ $? -eq 1 ]
+            then
+                continue;
+            fi
+        elif [[ $input =~ DELETE\ +FROM\ +[A-Za-z_]+\ +WHERE\ +([A-Za-z_]+=(\"[A-Za-z_0-9 ]+\"|([A-Za-z_0-9 ])+)\ +)\;$ ]]
+        then
+            delete_from_table $input
             if [ $? -eq 1 ]
             then
                 continue;
