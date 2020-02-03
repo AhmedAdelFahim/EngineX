@@ -27,6 +27,29 @@ function read_query {
             then
                 continue;
             fi
+        elif [[ $input =~ LIST\ +[A-Za-z_]+\;$ ]] ##check
+        then
+            #listTables "students"  ##for testing
+            listTables $input
+            if [ $? -eq 1 ]
+            then
+                continue;
+            fi
+        elif [[ $input =~ SELECT\ +FROM\ +[A-Za-z_]+\;$ ]] ##check
+        then
+            #selectAll "student"    ##for testing
+            selectAll $input
+            if [ $? -eq 1 ]
+            then
+                continue;
+            fi
+        elif [[ $input =~ BACK\;$ ]]
+        then
+            mainMenu
+            if [ $? -eq 1 ]
+            then
+                continue;
+            fi
         else
             echo "wrong query please enter correct query";
             continue;
@@ -34,5 +57,6 @@ function read_query {
 
     done
 }
-clear;
-read_query
+#clear;
+#read_query
+mainMenu

@@ -159,7 +159,121 @@ function delete_from_table {
             break;
         fi
     done
-
-
-
 }
+
+dbName="";
+dbs=($(ls database/)); #initializing
+
+function listDatabases {
+   dbs=($(ls database/)); #for updating
+   for(( i=0; i<${#dbs[@]}; i++ ))
+   do
+   echo "  -- ${dbs[$i]}"
+   done
+}
+
+function createDatabase {
+   read -p "Enter DB Name: " dbName;
+   mkdir -p database/$dbName/database #for data itself
+   mkdir database/$dbName/metadata    #for metadata
+   dbs=($(ls database/)); #for updating
+   echo '********************************'
+   echo '   DB is Created Successfully!  '
+   echo '********************************'
+}
+
+function connectToDatabase {
+   read -p "Enter DB Name: " dbName;
+   isFound=false;
+   for(( i=0; i<${#dbs[@]}; i++ ))
+   do
+   if [ "${dbs[$i]}" == "$dbName" ] ; then
+     #cd database/$dbName
+     isFound=true;
+     break;
+   fi
+   done
+   if [ "$isFound" = true ] ; then
+     echo '********************************'
+     echo "       $dbName is Selected      "
+     echo '********************************'
+     redirectToDBSystem
+   else
+     echo '**********************************************'
+     echo "$dbName is not Found, Please Select a Valid DB"
+     echo '**********************************************'
+     mainMenu
+   fi
+}
+
+function redirectToDBSystem {
+  echo '*****************************************************'
+  echo "  You can now:     "
+  echo "           1) List Tables in DB"
+  echo "           2) Create Tables in DB"
+  echo "           3) Insert Rows into Tables in DB"
+  echo "           4) Delete Rows from DB"
+  echo "           5) Select All Rows form a Table in DB"
+  echo "           6) Go Back to Main Menu          " #Needs to be handled???
+  echo '*****************************************************'
+  read_query
+}
+
+function listTables {  ##Needs to be handled in Regex
+ database=$1 
+ if [ "$(ls -A)" ] ; then
+   #tables=($(find * -not -name "*.meta" -type f))
+  tables=($(ls database/$database/database)) 
+  for(( i=0; i<${#tables[@]}; i++ ))
+   do
+    echo "  -- ${tables[$i]}"
+   done
+ else
+  echo '**************************************************'
+  echo 'Database is Empty. Create New Tables to Save :)'
+  echo '**************************************************'
+ fi
+}
+
+function selectAll { ##Needs to be handled in Regex
+  tableName=$1;
+  sed -n '1p' database/$dbName/metadate/$tableName | tr ":" "\t"; #header
+  cat database/$dbName/database/$tableName | tr ":" "\t";         #data, I modified in database table structure ":" at the beginning
+}
+
+echo '***********************'
+echo '  Welcome to EngineX   '
+echo '***********************'
+
+PS3="Enter Your Choice> "
+
+function mainMenu {
+ while true
+ do
+  select choice in 'List DBs' 'Create DB' 'Connect to DB' 'Exit'
+  do
+   case $choice in
+    'List DBs')
+    listDatabases
+    break;
+    ;;
+    'Create DB') 
+    createDatabase
+    break;
+    ;;
+    'Connect to DB') 
+    connectToDatabase
+    break 2;
+    ;;
+    Exit)
+    echo '************'
+    echo '    bye!    '
+    echo '************'   
+    exit
+    break 2;
+    ;;
+   esac
+  done
+ done
+}
+
