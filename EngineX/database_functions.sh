@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
 
+dbName=""; #this holds the name of the current database
+dbs=($(ls database/)); #initializing #this holds all the names of the existing databases
+
 function create_table {
 #    please check if two cols have same name
-    cd ../database/students/metadate/;      # look
+    cd ../database/students/metadate/;      # look ##please use "metadata" not "metadate" also $dbName may help you
+    # cd database/$dbName/metadata/;
     fields=($@);
     number_fields=${#fields[@]};
     if [ -f ${fields[2]} ];
@@ -25,12 +29,15 @@ function create_table {
     echo $colName >> ${fields[2]}
     echo $colType >> ${fields[2]}
     cd ../..                                    # look
+    echo '**********************************'
+    echo '  Table is Created Successfully!  '
+    echo '**********************************'  
     return 0;
 }
 
 function insert_into {
 
-    cd ../database/students/database/;
+    cd ../database/students/database/; #look
     fields=($@);
     number_fields=${#fields[@]};
     if [ ! -f ${fields[2]} ];
@@ -42,6 +49,7 @@ function insert_into {
     row="";
     stringFlag=0;
     colVal=""
+    # look ##please use "metadata" not "metadate" also $dbName may help you
     IFS=':' read -r -a colNames <<< `sed -n '1p' ../metadate/${fields[2]}`;
     IFS=':' read -r -a colTypes <<< `sed -n '2p' ../metadate/${fields[2]}`;
     typeset -i colNumber=-1
@@ -111,7 +119,7 @@ function insert_into {
 }
 
 function delete_from_table {
-    cd ../database/students/database/;
+    cd ../database/students/database/; #look
     fields=($@);
     number_fields=${#fields[@]};
     if [ ! -f ${fields[2]} ];
@@ -120,6 +128,7 @@ function delete_from_table {
         cd ..                            # look
         return 1;
     fi
+    # look ##please use "metadata" not "metadate" also $dbName may help you
     IFS=':' read -r -a colNames <<< `sed -n '1p' ../metadate/${fields[2]}`;
     IFS=':' read -r -a colTypes <<< `sed -n '2p' ../metadate/${fields[2]}`;
 
@@ -161,8 +170,6 @@ function delete_from_table {
     done
 }
 
-dbName="";
-dbs=($(ls database/)); #initializing
 
 function listDatabases {
    dbs=($(ls database/)); #for updating
@@ -173,13 +180,28 @@ function listDatabases {
 }
 
 function createDatabase {
-   read -p "Enter DB Name: " dbName;
-   mkdir -p database/$dbName/database #for data itself
-   mkdir database/$dbName/metadata    #for metadata
-   dbs=($(ls database/)); #for updating
-   echo '********************************'
-   echo '   DB is Created Successfully!  '
-   echo '********************************'
+    read -p "Enter DB Name: " dbName;
+    isFound=false;
+    for(( i=0; i<${#dbs[@]}; i++ ))
+    do
+    if [ "${dbs[$i]}" == "$dbName" ] ; then
+     isFound=true;
+     break;
+   fi
+   done
+   if [ "$isFound" = true ] ; then
+     echo '*************************************************************************'
+     echo "There's already a database named: $dbName. Please choose another name."
+     echo '*************************************************************************'
+   else
+    mkdir -p database/$dbName/database #for data itself
+    mkdir database/$dbName/metadata    #for metadata
+    dbs=($(ls database/)); #for updating
+    echo '********************************'
+    echo '   DB is Created Successfully!  '
+    echo '********************************'  
+   fi
+   mainMenu
 }
 
 function connectToDatabase {
@@ -211,17 +233,18 @@ function redirectToDBSystem {
   echo "  You can now:     "
   echo "           1) List Tables in DB"
   echo "           2) Create Tables in DB"
-  echo "           3) Insert Rows into Tables in DB"
-  echo "           4) Delete Rows from DB"
+  echo "           3) Insert Rows into a Table in DB"
+  echo "           4) Delete Rows from a Table"
   echo "           5) Select All Rows form a Table in DB"
-  echo "           6) Go Back to Main Menu          " #Needs to be handled???
+  echo "           6) Go Back to Main Menu          "
+  echo "           7) For help, type HELP;          "
   echo '*****************************************************'
   read_query
 }
 
-function listTables {  ##Needs to be handled in Regex
- database=$1 
- if [ "$(ls -A)" ] ; then
+function listTables {
+ database=$2
+ if [ "$(ls -A database/$database/database)" ] ; then
    #tables=($(find * -not -name "*.meta" -type f))
   tables=($(ls database/$database/database)) 
   for(( i=0; i<${#tables[@]}; i++ ))
@@ -235,10 +258,23 @@ function listTables {  ##Needs to be handled in Regex
  fi
 }
 
-function selectAll { ##Needs to be handled in Regex
-  tableName=$1;
-  sed -n '1p' database/$dbName/metadate/$tableName | tr ":" "\t"; #header
-  cat database/$dbName/database/$tableName | tr ":" "\t";         #data, I modified in database table structure ":" at the beginning
+function selectAll {
+  tableName=$4;
+  ## Either add : in the beginning of the header or remove the one at the beginning of data file
+  sed -n '1p' database/$dbName/metadata/$tableName | tr ":" "\t"; #header
+  cat database/$dbName/database/$tableName | tr ":" "\t";         #data
+}
+
+function showHelpInstructions {
+  echo '*****************************************************'
+  echo "  Welcome to Help :)     "
+  echo "     1) For Listing Tables in a DB, type LIST database_name ;"
+  echo "     2) For Creating Tables in a DB, type CREATE TABLE table_name CLOUMNS col_name,col_datatype .. ;"
+  echo "     3) For Inserting Rows into a Table, type INSERT INTO table_name ROW value1 value2 .. ;"
+  echo "     4) For Deleting Rows from a Table, type DELETE FROM table_name WHERE condition ;"
+  echo "     5) For Selecting All Rows form a Table, type SELECT ALL FROM table_name ;"
+  echo "     6) For Going Back to Main Menu, type BACK;          "
+  echo '*****************************************************'
 }
 
 echo '***********************'
