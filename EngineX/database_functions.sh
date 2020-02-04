@@ -60,7 +60,6 @@ function insert_into {
                 echo "many columns exist";
                 return 1;
             fi
-            echo "${array[0]} != ${colNames[${colNumber}]}"
             if [ ${array[0]} != ${colNames[${colNumber}]} ]
             then
                 echo "this column not exist";
@@ -116,7 +115,7 @@ function insert_into {
 function delete_from_table {
     fields=($@);
     number_fields=${#fields[@]};
-    if [ ! -f ${fields[2]} ];
+    if [ ! -f ../database/${dbName}/database/${fields[2]} ];
     then
         echo "${fields[2]} table not exist";
         return 1;
@@ -156,7 +155,7 @@ function delete_from_table {
             break;
         fi
     done
-    sed  '/^[[:space:]]*$/d' ./database/${dbName}/database/${fields[2]};
+    sed -i '/^[[:space:]]*$/d' ../database/${dbName}/database/${fields[2]};
     return 0;
 }
 
