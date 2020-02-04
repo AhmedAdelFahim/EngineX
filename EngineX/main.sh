@@ -2,6 +2,7 @@
 
 . ./database_functions.sh
 function read_query {
+    PS2="Enter Your Query> "
     input="";
     while [ 1 -eq 1 ]
     do
@@ -13,14 +14,14 @@ function read_query {
             then
                 continue;
             fi
-        elif [[ $input =~ INSERT\ +INTO\ +[A-Za-z_]+\ +ROW\ +([A-Za-z_]+=(\"[A-Za-z_0-9 ]+\"|([A-Za-z_0-9 ])+)\ +)+\;$ ]]
+        elif [[ $input =~ INSERT\ +INTO\ +[A-Za-z_]+\ +ROW\ +([A-Za-z_]+=(\"[A-Za-z_0-9@\. ]+\"|([0-9])+)\ +)+\;$ ]]
         then
             insert_into $input
             if [ $? -eq 1 ]
             then
                 continue;
             fi
-        elif [[ $input =~ DELETE\ +FROM\ +[A-Za-z_]+\ +WHERE\ +([A-Za-z_]+=(\"[A-Za-z_0-9 ]+\"|([A-Za-z_0-9 ])+)\ +)\;$ ]]
+        elif [[ $input =~ DELETE\ +FROM\ +[A-Za-z_]+\ +WHERE\ +([A-Za-z_]+=(\"[A-Za-z_0-9 ]+\"|([0-9])+)\ +)\;$ ]]
         then
             delete_from_table $input
             if [ $? -eq 1 ]
@@ -64,5 +65,5 @@ function read_query {
 }
 #clear;
 #read_query
+#clear;
 mainMenu
-clear;

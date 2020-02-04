@@ -4,55 +4,50 @@ dbName=""; #this holds the name of the current database
 dbs=($(ls database/)); #initializing #this holds all the names of the existing databases
 
 function create_table {
-#    please check if two cols have same name
-    cd ../database/students/metadate/;      # look ##please use "metadata" not "metadate" also $dbName may help you
-    # cd database/$dbName/metadata/;
     fields=($@);
     number_fields=${#fields[@]};
-    if [ -f ${fields[2]} ];
+    if [ -f ../database/${fields[2]} ];
     then
-        echo "this table already exist";
-        cd ../..                            # look
+        echo "${fields[2]} table already exist";
         return 1;
     fi
-    touch ${fields[2]};
-    touch ../database/${fields[2]};
+    touch ../database/$dbName/database/${fields[2]};
+    touch ../database/$dbName/metadata/${fields[2]};
     colName="";
     colType="";
     for (( i = 4; i < ${number_fields}-1; ++i )); do
         IFS=',' read -r -a array <<< "${fields[${i}]}";
-        colName=$colName${array[0]};
         colName=$colName":";
-        colType=$colType${array[1]};
+        colName=$colName${array[0]};
         colType=$colType":";
+        colType=$colType${array[1]};
     done
     echo $colName >> ${fields[2]}
     echo $colType >> ${fields[2]}
-    cd ../..                                    # look
     echo '**********************************'
     echo '  Table is Created Successfully!  '
-    echo '**********************************'  
+    echo '**********************************'
+    echo $colName >> ../database/$dbName/metadata/${fields[2]}
+    echo $colType >> ../database/$dbName/metadata/${fields[2]}
     return 0;
 }
 
 function insert_into {
 
-    cd ../database/students/database/; #look
     fields=($@);
     number_fields=${#fields[@]};
-    if [ ! -f ${fields[2]} ];
+    if [ ! -f ../database/$dbName/database/${fields[2]} ];
     then
-        echo "this table not exist";
-        cd ..                            # look
+        echo "${fields[2]} table not exist";
         return 1;
     fi
     row="";
     stringFlag=0;
     colVal=""
     # look ##please use "metadata" not "metadate" also $dbName may help you
-    IFS=':' read -r -a colNames <<< `sed -n '1p' ../metadate/${fields[2]}`;
-    IFS=':' read -r -a colTypes <<< `sed -n '2p' ../metadate/${fields[2]}`;
-    typeset -i colNumber=-1
+    IFS=':' read -r -a colNames <<< `sed -n '1p' ../database/$dbName/metadata/${fields[2]}`;
+    IFS=':' read -r -a colTypes <<< `sed -n '2p' ../database/$dbName/metadata/${fields[2]}`;
+    typeset -i colNumber=0
     for (( i = 4; i < ${number_fields}-1; ++i )); do
         if [ $stringFlag -eq 0 ]
         then
@@ -65,7 +60,7 @@ function insert_into {
                 echo "many columns exist";
                 return 1;
             fi
-
+            echo "${array[0]} != ${colNames[${colNumber}]}"
             if [ ${array[0]} != ${colNames[${colNumber}]} ]
             then
                 echo "this column not exist";
@@ -114,23 +109,20 @@ function insert_into {
         echo "few columns"
         return 1;
     fi
-    echo $row | sed -r 's/\"//g' >> ${fields[2]}
+    echo $row | sed -r 's/\"//g' >> ../database/$dbName/database/${fields[2]}
     return 0
 }
 
 function delete_from_table {
-    cd ../database/students/database/; #look
     fields=($@);
     number_fields=${#fields[@]};
     if [ ! -f ${fields[2]} ];
     then
-        echo "this table not exist";
-        cd ..                            # look
+        echo "${fields[2]} table not exist";
         return 1;
     fi
-    # look ##please use "metadata" not "metadate" also $dbName may help you
-    IFS=':' read -r -a colNames <<< `sed -n '1p' ../metadate/${fields[2]}`;
-    IFS=':' read -r -a colTypes <<< `sed -n '2p' ../metadate/${fields[2]}`;
+    IFS=':' read -r -a colNames <<< `sed -n '1p' ../database/${dbName}/metadata/${fields[2]}`;
+    IFS=':' read -r -a colTypes <<< `sed -n '2p' ../database/${dbName}/metadata/${fields[2]}`;
 
     IFS='=' read -r -a arr <<< "${fields[4]}";
     colName=${arr[0]};
@@ -144,35 +136,33 @@ function delete_from_table {
     for (( i = 0; i < ${#colNames[@]}; ++i )); do
         if [[ ${colNames[${i}]} = $colName && ${colTypes[${i}]} = $colType ]]
         then
-            read lineNum <<< $(awk -F: -v colNum="${i}" -v colName="$colName" -v colVal="$colVal" 'BEGIN{lineNum=-1}{
+            typeset -i linesUpdated=0
+            for lineNum in `awk -F: -v colNum="${i}"  -v colVal="$colVal"  'BEGIN{lineNum=-1}{
                 gsub("\"","",colVal);
                 colNum+=2;
                 for(j=2;j<=NF;++j)
                 {
                     if(colVal == $j) {
                         lineNum=NR;
+                        print lineNum
                     }
                 }
 
-            } END{
-                print lineNum
-            }' ${fields[2]})
-            if [ $lineNum -eq 0 ]
-            then
-                echo "0 Rows Deleted"
-                return 1;
-            else
-                sed -i "$lineNum d" ${fields[2]};
-                echo "1 Row Deleted"
-            fi
+            }' ../database/${dbName}/database/${fields[2]}`; do
+               sed -i "$lineNum s/.*//" ../database/${dbName}/database/${fields[2]};
+               linesUpdated=$linesUpdated+1;
+            done
+            echo "${linesUpdated} Rows Deleted";
             break;
         fi
     done
+    sed  '/^[[:space:]]*$/d' ./database/${dbName}/database/${fields[2]};
+    return 0;
 }
 
 
 function listDatabases {
-   dbs=($(ls database/)); #for updating
+   dbs=($(ls ../database/)); #for updating
    for(( i=0; i<${#dbs[@]}; i++ ))
    do
    echo "  -- ${dbs[$i]}"
@@ -194,12 +184,12 @@ function createDatabase {
      echo "There's already a database named: $dbName. Please choose another name."
      echo '*************************************************************************'
    else
-    mkdir -p database/$dbName/database #for data itself
-    mkdir database/$dbName/metadata    #for metadata
-    dbs=($(ls database/)); #for updating
+    mkdir -p ../database/$dbName/database #for data itself
+    mkdir ../database/$dbName/metadata    #for metadata
+    dbs=($(ls ../database/)); #for updating
     echo '********************************'
     echo '   DB is Created Successfully!  '
-    echo '********************************'  
+    echo '********************************'
    fi
    mainMenu
 }
@@ -244,9 +234,9 @@ function redirectToDBSystem {
 
 function listTables {
  database=$2
- if [ "$(ls -A database/$database/database)" ] ; then
+ if [ "$(ls -A ../database/$database/database)" ] ; then
    #tables=($(find * -not -name "*.meta" -type f))
-  tables=($(ls database/$database/database)) 
+  tables=($(ls ../database/$database/database))
   for(( i=0; i<${#tables[@]}; i++ ))
    do
     echo "  -- ${tables[$i]}"
@@ -261,8 +251,8 @@ function listTables {
 function selectAll {
   tableName=$4;
   ## Either add : in the beginning of the header or remove the one at the beginning of data file
-  sed -n '1p' database/$dbName/metadata/$tableName | tr ":" "\t"; #header
-  cat database/$dbName/database/$tableName | tr ":" "\t";         #data
+  sed -n '1p' ../database/$dbName/metadata/$tableName | tr ":" "\t"; #header
+  cat ../database/$dbName/database/$tableName | tr ":" "\t";         #data
 }
 
 function showHelpInstructions {
@@ -293,18 +283,18 @@ function mainMenu {
     listDatabases
     break;
     ;;
-    'Create DB') 
+    'Create DB')
     createDatabase
     break;
     ;;
-    'Connect to DB') 
+    'Connect to DB')
     connectToDatabase
     break 2;
     ;;
     Exit)
     echo '************'
     echo '    bye!    '
-    echo '************'   
+    echo '************'
     exit
     break 2;
     ;;
@@ -312,4 +302,3 @@ function mainMenu {
   done
  done
 }
-
