@@ -7,13 +7,11 @@ dbs=($(ls ../database));
 function create_table {
     fields=($@);
     number_fields=${#fields[@]};
-    if [ -f ../database/${fields[2]} ];
+    if [ -f ../database/$dbName/database/${fields[2]} ];
     then
         echo "${fields[2]} table already exist";
         return 1;
     fi
-    touch ../database/$dbName/database/${fields[2]};
-    touch ../database/$dbName/metadata/${fields[2]};
     colName="";
     colType="";
     for (( i = 4; i < ${number_fields}-1; ++i )); do
@@ -23,11 +21,22 @@ function create_table {
         colType=$colType":";
         colType=$colType${array[1]};
     done
-    echo $colName >> ${fields[2]}
-    echo $colType >> ${fields[2]}
+    IFS=':' read -r -a colNames <<< ${colName};
+    for (( i = 1; i < ${#colNames[@]}; ++i )); do
+        for (( j = i+1; j < ${#colNames[@]}; ++j )); do
+            if [ ${colNames[i]} == ${colNames[j]} ]
+            then
+                echo "two columns with same name";
+                return 1;
+            fi
+        done
+    done
+
     echo '**********************************'
     echo '  Table is Created Successfully!  '
     echo '**********************************'
+    touch ../database/$dbName/database/${fields[2]};
+    touch ../database/$dbName/metadata/${fields[2]};
     echo $colName >> ../database/$dbName/metadata/${fields[2]}
     echo $colType >> ../database/$dbName/metadata/${fields[2]}
     return 0;
@@ -45,7 +54,6 @@ function insert_into {
     row="";
     stringFlag=0;
     colVal=""
-    # look ##please use "metadata" not "metadate" also $dbName may help you
     IFS=':' read -r -a colNames <<< `sed -n '1p' ../database/$dbName/metadata/${fields[2]}`;
     IFS=':' read -r -a colTypes <<< `sed -n '2p' ../database/$dbName/metadata/${fields[2]}`;
     typeset -i colNumber=0
