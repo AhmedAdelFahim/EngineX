@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
 dbName=""; #this holds the name of the current database
-dbs=($(ls database/)); #initializing #this holds all the names of the existing databases
+# dbs=($(ls database/)); #initializing #this holds all the names of the existing databases
+dbs=($(ls ../database));
 
 function create_table {
     fields=($@);
@@ -247,11 +248,26 @@ function listTables {
  fi
 }
 
-function selectAll {
+function selectAll {  ##Check Here -- Rehab
   tableName=$4;
-  ## Either add : in the beginning of the header or remove the one at the beginning of data file
-  sed -n '1p' ../database/$dbName/metadata/$tableName | tr ":" "\t"; #header
-  cat ../database/$dbName/database/$tableName | tr ":" "\t";         #data
+  tables=($(ls ../database/$dbName/database))
+  isFound=false;
+  for(( i=0; i<${#tables[@]}; i++ ))
+   do
+    if [ "${tables[$i]}" == "$tableName" ] ; then
+     isFound=true;
+     break;
+   fi
+   done
+  if [ "$isFound" = true ] ; then
+    ## Either add : in the beginning of the header or remove the one at the beginning of data file
+    sed -n '1p' ../database/$dbName/metadata/$tableName | tr ":" "\t"; #header
+    cat ../database/$dbName/database/$tableName | tr ":" "\t";         #data
+  else
+    echo '*********************************'
+    echo '       Table is not Found        '
+    echo '*********************************'
+  fi
 }
 
 function showHelpInstructions {
