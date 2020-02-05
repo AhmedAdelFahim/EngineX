@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 dbName=""; #this holds the name of the current database
-# dbs=($(ls database/)); #initializing #this holds all the names of the existing databases
-dbs=($(ls ../database));
+dbs=($(ls ../database)); #initializing #this holds all the names of the existing databases
+
 
 function create_table {
     fields=($@);
@@ -256,7 +256,7 @@ function listTables {
  fi
 }
 
-function selectAll {  ##Check Here -- Rehab
+function selectAll {
   tableName=$4;
   tables=($(ls ../database/$dbName/database))
   isFound=false;
@@ -268,7 +268,6 @@ function selectAll {  ##Check Here -- Rehab
    fi
    done
   if [ "$isFound" = true ] ; then
-    ## Either add : in the beginning of the header or remove the one at the beginning of data file
     sed -n '1p' ../database/$dbName/metadata/$tableName | tr ":" "\t"; #header
     cat ../database/$dbName/database/$tableName | tr ":" "\t";         #data
   else
@@ -283,7 +282,7 @@ function showHelpInstructions {
   echo "  Welcome to Help :)     "
   echo "     1) For Listing Tables in a DB, type LIST database_name ;"
   echo "     2) For Creating Tables in a DB, type CREATE TABLE table_name CLOUMNS col_name,col_datatype .. ;"
-  echo "     3) For Inserting Rows into a Table, type INSERT INTO table_name ROW value1 value2 .. ;"
+  echo "     3) For Inserting Rows into a Table, type INSERT INTO table_name ROW col1_name=value1 ... ;"
   echo "     4) For Deleting Rows from a Table, type DELETE FROM table_name WHERE condition ;"
   echo "     5) For Selecting All Rows form a Table, type SELECT ALL FROM table_name ;"
   echo "     6) For Going Back to Main Menu, type BACK;          "
