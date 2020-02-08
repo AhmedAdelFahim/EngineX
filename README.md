@@ -19,7 +19,7 @@ Project was created with:
 
 ## Installation
 ```
-$ https://github.com/AhmedAdelFahim/EngineX.git
+$ git clone https://github.com/AhmedAdelFahim/EngineX.git
 ```
 After you clone the prject follow the next steps:
 ```
