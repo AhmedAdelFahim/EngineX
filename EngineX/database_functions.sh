@@ -26,7 +26,7 @@ function create_table {
         for (( j = i+1; j < ${#colNames[@]}; ++j )); do
             if [ ${colNames[i]} == ${colNames[j]} ]
             then
-                echo "two columns with same name";
+                echo "more than one column with same name";
                 return 1;
             fi
         done
@@ -71,7 +71,7 @@ function insert_into {
             fi
             if [ ${array[0]} != ${colNames[${colNumber}]} ]
             then
-                echo "this column not exist";
+                echo "${colNames[${colNumber}]} column not exist";
                 return 1;
             fi
 
@@ -80,7 +80,7 @@ function insert_into {
         then
             if [ ${colTypes[${colNumber}]} != "text" ]
             then
-                echo "wrong datatype";
+                echo "wrong datatype of ${colNames[${colNumber}]}";
                 return 1;
             fi
             colVal=$colVal${array[1]}
@@ -106,7 +106,7 @@ function insert_into {
 
         if [ ${colTypes[${colNumber}]} != "int" ]
         then
-            echo "wrong datatype";
+            echo "wrong datatype ${colNames[${colNumber}]}";
             return 1;
         fi
         colVal=${array[1]}
