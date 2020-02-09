@@ -41,7 +41,7 @@ function read_query {
             then
                 continue;
             fi
-        elif [[ $input =~ ^BACK\;$ ]] ##DONE
+        elif [[ $input =~ ^BACK\ +\;$ ]] ##DONE
         then
             mainMenu
             if [ $? -eq 1 ]

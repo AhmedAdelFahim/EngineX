@@ -141,16 +141,22 @@ function delete_from_table {
         colVal=$colVal" "${fields[${i}]}
         colType=text;
     done
-    for (( i = 0; i < ${#colNames[@]}; ++i )); do
+    if [[ $colVal =~ \"$ ]]
+    then
+        colType=text;
+    fi
+    for (( i = 1; i < ${#colNames[@]}; ++i )); do
         if [[ ${colNames[${i}]} = $colName && ${colTypes[${i}]} = $colType ]]
         then
             typeset -i linesUpdated=0
-            for lineNum in `awk -F: -v colNum="${i}"  -v colVal="$colVal"  'BEGIN{lineNum=-1}{
+            typeset -i index=i;
+            index=$index+1
+            for lineNum in `awk -F: -v colNum="${index}"  -v colVal="$colVal"  'BEGIN{lineNum=-1}{
                 gsub("\"","",colVal);
-                colNum+=2;
                 for(j=2;j<=NF;++j)
                 {
-                    if(colVal == $j) {
+
+                    if(colVal == $j && colNum == j) {
                         lineNum=NR;
                         print lineNum
                     }
@@ -167,7 +173,6 @@ function delete_from_table {
     sed -i '/^[[:space:]]*$/d' ../database/${dbName}/database/${fields[2]};
     return 0;
 }
-
 
 function listDatabases {
    dbs=($(ls ../database/)); #for updating
