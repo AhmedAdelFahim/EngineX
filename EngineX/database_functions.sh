@@ -240,15 +240,18 @@ function redirectToDBSystem {
   echo "           4) Delete Rows from a Table"
   echo "           5) Select All Rows form a Table in DB"
   echo "           6) Go Back to Main Menu          "
-  echo "           7) For help, type HELP;          "
+  echo "           7) For help, type HELP ;          "
   echo '*****************************************************'
   read_query
 }
 
 function listTables {
  database=$2
- if [ "$(ls -A ../database/$database/database)" ] ; then
-   #tables=($(find * -not -name "*.meta" -type f))
+ if test ! -d "../database/$database" ; then
+  echo '**********************************************'
+  echo 'Misspelled Database Name. Please Check it!'
+  echo '**********************************************'  
+ elif [ "$(ls -A ../database/$database/database)" ] ; then
   tables=($(ls ../database/$database/database))
   for(( i=0; i<${#tables[@]}; i++ ))
    do
@@ -290,7 +293,7 @@ function showHelpInstructions {
   echo "     3) For Inserting Rows into a Table, type INSERT INTO table_name ROW col1_name=value1 ... ;"
   echo "     4) For Deleting Rows from a Table, type DELETE FROM table_name WHERE condition ;"
   echo "     5) For Selecting All Rows form a Table, type SELECT ALL FROM table_name ;"
-  echo "     6) For Going Back to Main Menu, type BACK;          "
+  echo "     6) For Going Back to Main Menu, type BACK ;          "
   echo '*****************************************************'
 }
 
